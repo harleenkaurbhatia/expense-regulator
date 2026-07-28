@@ -18,8 +18,6 @@ class SmsAdapter(
     private val smsMessages: List<SmsMessage>
 ) : RecyclerView.Adapter<SmsAdapter.SmsViewHolder>() {
 
-    private val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SmsViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_sms, parent, false)
@@ -38,6 +36,7 @@ class SmsAdapter(
         private val timestampTextView: TextView = itemView.findViewById(R.id.tvTimestamp)
         private val bodyTextView: TextView = itemView.findViewById(R.id.tvBody)
         private val amountTextView: TextView = itemView.findViewById(R.id.tvAmount)
+        private val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
 
         fun bind(sms: SmsMessage) {
             senderTextView.text = sms.sender
