@@ -5,12 +5,13 @@ plugins {
 
 android {
     namespace = "com.expenseregulator.app"
-    compileSdk = 34
+    compileSdk = 33
+    buildToolsVersion = "30.0.3"
 
     defaultConfig {
         applicationId = "com.expenseregulator.app"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 33
         versionCode = 1
         versionName = "1.0"
 
