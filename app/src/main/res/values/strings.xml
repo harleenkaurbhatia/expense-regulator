@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Expense Regulator</string>
+    <string name="permission_title">SMS Access Required</string>
+    <string name="permission_message">To automatically track your transactions, Expense Regulator needs access to read your SMS messages.</string>
+    <string name="permission_reason_1">Read your transaction SMS messages automatically</string>
+    <string name="permission_reason_2">Detect bank debits, UPI payments, and card spends</string>
+    <string name="permission_reason_3">All data stays on your device - no cloud storage</string>
+    <string name="permission_reason_4">We only read transaction messages, ignoring OTPs and spam</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="skip">Skip</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="empty_state">No transaction SMS found yet.\n\nSwipe down to refresh or wait for new transaction messages.</string>
+    <string name="loading">Loading transactions…</string>
+    <string name="new_transaction_detected">New transaction SMS detected!</string>
+    <string name="permission_denied">SMS permissions are required for full functionality</string>
+    <string name="permission_permanently_denied">Permissions are permanently denied. Please enable them in settings.</string>
+    <string name="failed_to_load_sms">Failed to load SMS</string>
+    <string name="sender">From:</string>
+    <string name="timestamp">Time:</string>
+    <string name="amount">Amount:</string>
+</resources>
