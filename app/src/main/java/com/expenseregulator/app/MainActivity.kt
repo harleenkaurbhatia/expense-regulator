@@ -164,6 +164,47 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        when (requestCode) {
+            PermissionHelper.SMS_PERMISSION_REQUEST_CODE -> {
+                val allGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+
+                if (allGranted) {
+                    Log.d(TAG, "Permissions granted, loading SMS...")
+                    loadTransactionSms()
+                } else {
+                    Log.w(TAG, "Permissions denied")
+
+                    // Check if any permissions are permanently denied
+                    if (PermissionHelper.isAnyPermissionPermanentlyDenied(this)) {
+                        Toast.makeText(
+                            this,
+                            "SMS permissions are permanently denied. Please enable them in Settings.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            this,
+                            "SMS permissions are required for full functionality.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                    // Show explanation with option to open settings
+                    val intent = Intent(this, PermissionExplanationActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         // Register receiver for real-time SMS detection

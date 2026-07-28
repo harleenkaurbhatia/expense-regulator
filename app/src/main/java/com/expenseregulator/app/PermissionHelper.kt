@@ -18,48 +18,92 @@ object PermissionHelper {
     // Permission request codes
     const val SMS_PERMISSION_REQUEST_CODE = 1001
 
-    // Required permissions
-    private val SMS_PERMISSIONS = arrayOf(
-        Manifest.permission.READ_SMS,
-        Manifest.permission.RECEIVE_SMS
-    )
+    // Required permissions (requested separately for better compatibility)
+    private val READ_SMS_PERMISSION = Manifest.permission.READ_SMS
+    private val RECEIVE_SMS_PERMISSION = Manifest.permission.RECEIVE_SMS
 
     /**
      * Checks if all SMS permissions are granted.
      */
     fun areSmsPermissionsGranted(context: Context): Boolean {
-        for (permission in SMS_PERMISSIONS) {
-            if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                Log.d(TAG, "Permission not granted: $permission")
-                return false
-            }
-        }
-        Log.d(TAG, "All SMS permissions granted")
-        return true
+        val readGranted = ContextCompat.checkSelfPermission(context, READ_SMS_PERMISSION) == PackageManager.PERMISSION_GRANTED
+        val receiveGranted = ContextCompat.checkSelfPermission(context, RECEIVE_SMS_PERMISSION) == PackageManager.PERMISSION_GRANTED
+
+        Log.d(TAG, "READ_SMS granted: $readGranted, RECEIVE_SMS granted: $receiveGranted")
+        return readGranted && receiveGranted
     }
 
     /**
      * Requests SMS permissions from the user.
+     * For better compatibility, we'll request them one at a time.
      */
     fun requestSmsPermissions(activity: Activity) {
         Log.d(TAG, "Requesting SMS permissions...")
+
+        // Check which permissions are missing
+        val permissionsToRequest = mutableListOf<String>()
+
+        if (ContextCompat.checkSelfPermission(activity, READ_SMS_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(READ_SMS_PERMISSION)
+        }
+
+        if (ContextCompat.checkSelfPermission(activity, RECEIVE_SMS_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(RECEIVE_SMS_PERMISSION)
+        }
+
+        if (permissionsToRequest.isEmpty()) {
+            Log.d(TAG, "All permissions already granted")
+            return
+        }
+
+        Log.d(TAG, "Requesting permissions: $permissionsToRequest")
+
+        // Request permissions (handle them together for now, but with better error handling)
         ActivityCompat.requestPermissions(
             activity,
-            SMS_PERMISSIONS,
+            permissionsToRequest.toTypedArray(),
             SMS_PERMISSION_REQUEST_CODE
         )
     }
 
     /**
+     * Alternative method: Request permissions one at a time for better compatibility
+     */
+    fun requestPermissionsSequentially(activity: Activity) {
+        Log.d(TAG, "Requesting SMS permissions sequentially...")
+
+        // Check and request READ_SMS first
+        if (ContextCompat.checkSelfPermission(activity, READ_SMS_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(READ_SMS_PERMISSION),
+                SMS_PERMISSION_REQUEST_CODE
+            )
+        } else if (ContextCompat.checkSelfPermission(activity, RECEIVE_SMS_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+            // Only request RECEIVE_SMS if READ_SMS is already granted
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(RECEIVE_SMS_PERMISSION),
+                SMS_PERMISSION_REQUEST_CODE + 1
+            )
+        } else {
+            Log.d(TAG, "All permissions already granted")
+        }
+    }
+
+    /**
      * Checks if the user should see a rationale for why the permission is needed.
      */
-    fun shouldShowPermissionRationale(activity: Activity): Boolean {
-        for (permission in SMS_PERMISSIONS) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
-                return true
-            }
-        }
-        return false
+    fun shouldShowPermissionRationale(activity: Activity, permission: String): Boolean {
+        return ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
+    }
+
+    /**
+     * Checks if any permission rationale should be shown.
+     */
+    fun shouldShowAnyPermissionRationale(activity: Activity): Boolean {
+        return shouldShowPermissionRationale(activity, READ_SMS_PERMISSION) ||
+               shouldShowPermissionRationale(activity, RECEIVE_SMS_PERMISSION)
     }
 
     /**
@@ -87,17 +131,24 @@ object PermissionHelper {
     /**
      * Checks if the user has permanently denied the permission.
      */
-    fun isPermissionPermanentlyDenied(activity: Activity): Boolean {
-        for (permission in SMS_PERMISSIONS) {
-            val isGranted = ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
-            val shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
+    fun isPermissionPermanentlyDenied(activity: Activity, permission: String): Boolean {
+        val isGranted = ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
+        val shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
+        val isPermanentlyDenied = !isGranted && !shouldShowRationale
 
-            if (!isGranted && !shouldShowRationale) {
-                Log.d(TAG, "Permission permanently denied: $permission")
-                return true
-            }
+        if (isPermanentlyDenied) {
+            Log.d(TAG, "Permission permanently denied: $permission")
         }
-        return false
+
+        return isPermanentlyDenied
+    }
+
+    /**
+     * Checks if any permission is permanently denied.
+     */
+    fun isAnyPermissionPermanentlyDenied(activity: Activity): Boolean {
+        return isPermissionPermanentlyDenied(activity, READ_SMS_PERMISSION) ||
+               isPermissionPermanentlyDenied(activity, RECEIVE_SMS_PERMISSION)
     }
 
     /**
@@ -105,11 +156,26 @@ object PermissionHelper {
      */
     fun getMissingPermissions(context: Context): List<String> {
         val missing = mutableListOf<String>()
-        for (permission in SMS_PERMISSIONS) {
-            if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                missing.add(permission)
-            }
+
+        if (ContextCompat.checkSelfPermission(context, READ_SMS_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+            missing.add(READ_SMS_PERMISSION)
         }
+
+        if (ContextCompat.checkSelfPermission(context, RECEIVE_SMS_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+            missing.add(RECEIVE_SMS_PERMISSION)
+        }
+
         return missing
+    }
+
+    /**
+     * Gets a specific permission description.
+     */
+    fun getPermissionDescription(permission: String): String {
+        return when (permission) {
+            READ_SMS_PERMISSION -> "Read SMS messages to detect transaction alerts"
+            RECEIVE_SMS_PERMISSION -> "Receive SMS messages for real-time transaction detection"
+            else -> "Unknown permission"
+        }
     }
 }

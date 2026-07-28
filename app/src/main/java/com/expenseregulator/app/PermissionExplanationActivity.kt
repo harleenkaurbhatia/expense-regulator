@@ -24,7 +24,8 @@ class PermissionExplanationActivity : AppCompatActivity() {
         // Set up the grant permission button
         val grantButton = findViewById<Button>(R.id.btnGrantPermission)
         grantButton.setOnClickListener {
-            PermissionHelper.requestSmsPermissions(this)
+            // Try sequential permission request for better compatibility
+            PermissionHelper.requestPermissionsSequentially(this)
         }
 
         // Set up the skip button
@@ -45,10 +46,14 @@ class PermissionExplanationActivity : AppCompatActivity() {
         }
 
         // Check if permissions are permanently denied and show settings button
-        if (PermissionHelper.isPermissionPermanentlyDenied(this)) {
+        if (PermissionHelper.isAnyPermissionPermanentlyDenied(this)) {
             settingsButton.visibility = android.view.View.VISIBLE
             grantButton.isEnabled = false
-            grantButton.text = "Permission Permanently Denied"
+            grantButton.text = "Permission Permanently Denied - Open Settings"
+        } else {
+            settingsButton.visibility = android.view.View.GONE
+            grantButton.isEnabled = true
+            grantButton.text = "Grant Permission"
         }
     }
 
@@ -67,35 +72,62 @@ class PermissionExplanationActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (requestCode == PermissionHelper.SMS_PERMISSION_REQUEST_CODE) {
-            if (PermissionHelper.handlePermissionResult(grantResults)) {
-                // Permissions granted, proceed to MainActivity
-                Toast.makeText(this, "Permissions granted!", Toast.LENGTH_SHORT).show()
-                val intent = Intent(this, MainActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
-            } else {
-                // Permissions denied
-                if (PermissionHelper.isPermissionPermanentlyDenied(this)) {
-                    // Show settings button
-                    findViewById<TextView>(R.id.tvOpenSettings).visibility = android.view.View.VISIBLE
-                    findViewById<Button>(R.id.btnGrantPermission).isEnabled = false
-                    findViewById<Button>(R.id.btnGrantPermission).text = "Permission Permanently Denied"
+        when (requestCode) {
+            PermissionHelper.SMS_PERMISSION_REQUEST_CODE, PermissionHelper.SMS_PERMISSION_REQUEST_CODE + 1 -> {
+                // Check if all requested permissions were granted
+                val allGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
 
-                    Toast.makeText(
-                        this,
-                        "Permissions are permanently denied. Please enable them in settings.",
-                        Toast.LENGTH_LONG
-                    ).show()
+                if (allGranted) {
+                    // Permissions granted, proceed to MainActivity
+                    Toast.makeText(this, "Permissions granted!", Toast.LENGTH_SHORT).show()
+
+                    // Check if all permissions are now granted
+                    if (PermissionHelper.areSmsPermissionsGranted(this)) {
+                        val intent = Intent(this, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        // Request the remaining permission
+                        PermissionHelper.requestPermissionsSequentially(this)
+                    }
                 } else {
-                    Toast.makeText(
-                        this,
-                        "Permissions are required for this app to work",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    // Permissions denied
+                    if (PermissionHelper.isAnyPermissionPermanentlyDenied(this)) {
+                        // Show settings button
+                        findViewById<TextView>(R.id.tvOpenSettings).visibility = android.view.View.VISIBLE
+                        findViewById<Button>(R.id.btnGrantPermission).isEnabled = false
+                        findViewById<Button>(R.id.btnGrantPermission).text = "Permission Permanently Denied - Open Settings"
+
+                        Toast.makeText(
+                            this,
+                            "Permissions are permanently denied. Please enable them in Settings → Apps → Expense Regulator → Permissions → SMS",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        // User denied but can ask again
+                        Toast.makeText(
+                            this,
+                            "Permissions are required for this app to work. Please try again.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Check permission status when activity resumes (in case user granted in settings)
+        if (PermissionHelper.areSmsPermissionsGranted(this)) {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
+        } else {
+            // Update UI based on current permission status
+            setupUI()
         }
     }
 }
