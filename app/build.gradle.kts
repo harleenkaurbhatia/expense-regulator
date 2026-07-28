@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "com.expenseregulator.app"
-    compileSdk = 33
+    compileSdkVersion(33)
+    buildToolsVersion("30.0.3")
 
     defaultConfig {
         applicationId = "com.expenseregulator.app"
-        minSdk = 26
-        targetSdk = 33
+        minSdkVersion(26)
+        targetSdkVersion(33)
         versionCode = 1
         versionName = "1.0"
 
@@ -28,12 +28,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
 
     buildFeatures {
@@ -43,7 +43,7 @@ android {
 
 dependencies {
     // Core Android
-    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
@@ -60,7 +60,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
     // Testing
     testImplementation("junit:junit:4.13.2")
