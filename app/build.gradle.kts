@@ -41,6 +41,19 @@ android {
     }
 }
 
+// Force Kotlin stdlib version to avoid conflicts
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            if (requested.group == "org.jetbrains.kotlin") {
+                if (requested.name == "kotlin-stdlib-jdk7" || requested.name == "kotlin-stdlib-jdk8") {
+                    useVersion("1.7.22")
+                }
+            }
+        }
+    }
+}
+
 dependencies {
     // Core Android
     implementation("androidx.core:core-ktx:1.9.0")
@@ -61,12 +74,6 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
-
-    // Exclude conflicting Kotlin stdlib modules
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.22") {
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
-    }
 
     // Testing
     testImplementation("junit:junit:4.13.2")

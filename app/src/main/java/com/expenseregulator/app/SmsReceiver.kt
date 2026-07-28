@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Telephony
-import android.telephony.SmsMessage
+import android.telephony.SmsMessage as AndroidSmsMessage
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +29,7 @@ class SmsReceiver : BroadcastReceiver() {
                     val pdus = bundle.get("pdus") as? Array<ByteArray>
                     if (pdus != null) {
                         for (pdu in pdus) {
-                            val smsMessage = SmsMessage.createFromPdu(pdu)
+                            val smsMessage = AndroidSmsMessage.createFromPdu(pdu)
                             if (smsMessage != null) {
                                 handleIncomingSms(context, smsMessage)
                             }
@@ -42,7 +42,7 @@ class SmsReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun handleIncomingSms(context: Context, smsMessage: SmsMessage) {
+    private fun handleIncomingSms(context: Context, smsMessage: AndroidSmsMessage) {
         val sender = smsMessage.originatingAddress ?: "Unknown"
         val body = smsMessage.messageBody
         val timestamp = smsMessage.timestampMillis
@@ -55,7 +55,7 @@ class SmsReceiver : BroadcastReceiver() {
             Log.d(TAG, "✓ Transaction SMS detected in real-time!")
 
             // Create a new transaction message
-            val transactionSms = SmsMessage(
+            val transactionSms = com.expenseregulator.app.SmsMessage(
                 id = System.currentTimeMillis(), // Use timestamp as temporary ID
                 sender = sender,
                 body = body,
